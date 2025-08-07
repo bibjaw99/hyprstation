@@ -62,12 +62,15 @@ rsync -a --exclude='.git' "$GIT_DIR/dotfiles/" "$DEST_DIR/"
 
 # ───── Run setup scripts ─────────────────────────────────────────
 print "Running package_install.sh"
-bash "$INSTALL_SCRIPT_DIR/package_install.sh"
+
+cd $INSTALL_SCRIPT_DIR
+
+bash "package_install.sh"
 
 print "Running symlink_configs.sh"
-bash "$INSTALL_SCRIPT_DIR/symlink_configs.sh"
+bash "symlink_configs.sh"
 
 print "Running symlink_files.sh"
-bash "$INSTALL_SCRIPT_DIR/symlink_files.sh"
+bash "symlink_files.sh"
 
 print "Installation complete!"
