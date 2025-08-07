@@ -34,8 +34,8 @@ fi
 
 # ───── Copy dotfiles directory ─────
 if [[ -d "$TARGET_DIR" ]]; then
-  echo "⚠️  $TARGET_DIR already exists. Overwrite? [y/N]"
-  read -r confirm
+  echo "⚠️  $TARGET_DIR already exists. Overwrite? [y/N]" > /dev/tty
+  read -r confirm < /dev/tty
   if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
     error "Aborted by user."
   fi
