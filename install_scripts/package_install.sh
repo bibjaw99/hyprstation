@@ -33,7 +33,8 @@ install_package "${dev_packages[@]}"
 
 # Display server choice
 while true; do
-  read -p "What is your preference? 1) xorg 2) wayland 3) both [default: 2]: " display_server
+  echo -n "What is your preference? 1) xorg 2) wayland 3) both [default: 2]: " > /dev/tty
+  read -r display_server < /dev/tty
   display_server=${display_server:-2}
 
   case "$display_server" in
