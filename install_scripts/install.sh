@@ -48,9 +48,14 @@ cp -r "$CLONE_DIR/dotfiles" "$TARGET_DIR"
 # ───── Run installation scripts ─────
 run_script_if_exists() {
   local script="$1"
-  if [[ -f "$INSTALL_SCRIPT_DIR/$script" ]]; then
+  local script_path="$INSTALL_SCRIPT_DIR/$script"
+
+  if [[ -f "$script_path" ]]; then
     info "Running $script..."
-    bash "$INSTALL_SCRIPT_DIR/$script"
+    (
+      cd "$INSTALL_SCRIPT_DIR"
+      bash "./$script"
+    )
   else
     info "$script not found, skipping."
   fi
