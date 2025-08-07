@@ -1,55 +1,72 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Create the github clone destination
-mkdir -p "$HOME/github"
-
-# Configurable paths
+# ───── Config ────────────────────────────────────────────────────
 REPO_URL="https://github.com/bibjaw99/workstation_testing"
-GIT_DIR="$HOME/github/reponame"
 DEST_DIR="$HOME/.local/share/dotfiles"
+GITHUB_CLONE_DIR="$HOME/github"
 
-# Ensure git is installed
+# ───── Color codes ───────────────────────────────────────────────
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+RED='\033[0;31m'
+NC='\033[0m' # No color
+
+# ───── Helpers ───────────────────────────────────────────────────
+function print() {
+  echo -e "${GREEN}✔ $1${NC}"
+}
+
+function warn() {
+  echo -e "${YELLOW}⚠ $1${NC}"
+}
+
+function error() {
+  echo -e "${RED}✖ $1${NC}" >&2
+  exit 1
+}
+
+# ───── Ensure git is installed ───────────────────────────────────
 if ! command -v git &>/dev/null; then
-  echo "❌ git is not installed. Aborting."
-  exit 1
+  error "git is not installed. Please install git and retry."
 fi
 
-echo "📥 Cloning repo from $REPO_URL to $GIT_DIR..."
-git clone "$REPO_URL" "$GIT_DIR"
+# ───── Prepare directories ───────────────────────────────────────
+mkdir -p "$GITHUB_CLONE_DIR"
 
-# Check if dotfiles subfolder exists in repo
+REPO_NAME=$(basename "$REPO_URL" .git)              # Strip .git if present
+GIT_DIR="$GITHUB_CLONE_DIR/$REPO_NAME"
+
+print "Cloning repo: $REPO_URL → $GIT_DIR"
+git clone --depth=1 "$REPO_URL" "$GIT_DIR"
+
+# ───── Check if dotfiles/ exists ─────────────────────────────────
 if [[ ! -d "$GIT_DIR/dotfiles" ]]; then
-  echo "❌ 'dotfiles/' directory not found in the repository."
-  exit 1
+  error "'dotfiles/' directory not found in the repository root."
 fi
 
-# Prompt before overwriting existing DEST_DIR
+# ───── Prompt before overwrite ───────────────────────────────────
 if [[ -d "$DEST_DIR" ]]; then
-  echo "⚠️  $DEST_DIR already exists. Overwrite? [y/N]"
+  warn "$DEST_DIR already exists. Overwrite? [y/N]"
   read -r confirm
-  if [[ "$confirm" =~ ^[Yy]$ ]]; then
-    rm -rf "$DEST_DIR"
-  else
-    echo "❌ Aborted."
-    exit 1
+  if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+    error "Aborted by user."
   fi
+  rm -rf "$DEST_DIR"
 fi
 
-# Copy only the dotfiles folder (excluding .git)
-echo "📦 Copying dotfiles to $DEST_DIR..."
-rsync -a --exclude '.git' "$GIT_DIR/dotfiles/" "$DEST_DIR/"
+# ───── Copy dotfiles/ → .local/share/dotfiles ────────────────────
+print "Copying dotfiles to $DEST_DIR"
+rsync -a --exclude='.git' "$GIT_DIR/dotfiles/" "$DEST_DIR/"
 
-echo "📁 Switching to $DEST_DIR"
-cd "$DEST_DIR"
+# ───── Run setup scripts ─────────────────────────────────────────
+print "Running package_install.sh"
+bash "$DEST_DIR/package_install.sh"
 
-echo "📦 Running package installer..."
-bash ./package_install.sh
+print "Running symlink_configs.sh"
+bash "$DEST_DIR/symlink_configs.sh"
 
-echo "🔗 Linking config directories..."
-bash ./symlink_configs.sh
+print "Running symlink_files.sh"
+bash "$DEST_DIR/symlink_files.sh"
 
-echo "🔗 Linking config files..."
-bash ./symlink_files.sh
-
-echo "✅ Done!"
+print "Installation complete!"
