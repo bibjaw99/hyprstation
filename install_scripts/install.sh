@@ -5,6 +5,7 @@ set -euo pipefail
 REPO_URL="https://github.com/bibjaw99/workstation_testing"
 DEST_DIR="$HOME/.local/share/dotfiles"
 GITHUB_CLONE_DIR="$HOME/github"
+INSTALL_SCRIPT_DIR="$HOME/github/workstation_testing/install_scripts"
 
 # ───── Color codes ───────────────────────────────────────────────
 GREEN='\033[0;32m'
@@ -61,12 +62,12 @@ rsync -a --exclude='.git' "$GIT_DIR/dotfiles/" "$DEST_DIR/"
 
 # ───── Run setup scripts ─────────────────────────────────────────
 print "Running package_install.sh"
-bash "$DEST_DIR/package_install.sh"
+bash "$INSTALL_SCRIPT_DIR/package_install.sh"
 
 print "Running symlink_configs.sh"
-bash "$DEST_DIR/symlink_configs.sh"
+bash "$INSTALL_SCRIPT_DIR/symlink_configs.sh"
 
 print "Running symlink_files.sh"
-bash "$DEST_DIR/symlink_files.sh"
+bash "$INSTALL_SCRIPT_DIR/symlink_files.sh"
 
 print "Installation complete!"
