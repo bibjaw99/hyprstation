@@ -40,10 +40,13 @@ if [[ -d "$TARGET_DIR" ]]; then
     error "Aborted by user."
   fi
   rm -rf "$TARGET_DIR"
+  cp -r "$CLONE_DIR/dotfiles" "$TARGET_DIR"
+  info "Copied and overwritten dotfiles. Skipping further install."
+  exit 0
+else
+  cp -r "$CLONE_DIR/dotfiles" "$TARGET_DIR"
+  info "Copied dotfiles (fresh install). Proceeding with setup..."
 fi
-
-info "Copying dotfiles to $TARGET_DIR"
-cp -r "$CLONE_DIR/dotfiles" "$TARGET_DIR"
 
 # ───── Run installation scripts ─────
 run_script_if_exists() {
