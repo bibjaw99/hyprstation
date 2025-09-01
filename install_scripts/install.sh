@@ -1,62 +1,42 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-REPO_URL="https://github.com/bibjaw99/workstation_testing"
-TARGET_DIR="$HOME/.local/share/dotfiles"
-GITHUB_PROJECT_DIR="$HOME/github"
-REPO_NAME=$(basename "$REPO_URL" .git)
-CLONE_DIR="$GITHUB_PROJECT_DIR/$REPO_NAME"
-INSTALL_SCRIPT_DIR="$CLONE_DIR/install_scripts"
+repo_url_workstation="https://github.com/bibjaw99/hyprstation"
+dir_dotfiles="$HOME/.local/share/hypr_dotfiles"
+dir_github_projects="$HOME/github"
+basename_repo_workstation=$(basename "$repo_url_workstation" .git)
+dir_project_workstation="$dir_github_projects/$basename_repo_workstation"
+dir_install_scripts="$dir_project_workstation/install_scripts"
 
-# ───── Functions ─────
-error() {
-  echo "❌ $1" >&2
+mkdir -p "$(dirname "$dir_dotfiles")"
+
+# Functions
+info () {
+  printf "\e[1;34m[INFO]\e[0m %s\n" "$*"
+}
+
+success () {
+  printf "\e[1;32m[SUCCESS]\e[0m %s\n" "$*"
+}
+
+warning () {
+  printf "\e[1;33m[WARNING]\e[0m %s\n" "$*"
+}
+
+error () {
+  printf "\e[1;31m[ERROR]\e[0m %s\n" "$*" >&2
   exit 1
 }
 
-info() {
-  echo "📦 $1"
-}
-
-# ───── Check for git ─────
-if ! command -v git &>/dev/null; then
-  error "git is not installed. Please install it and retry."
-fi
-
-# ───── Clone repo if needed ─────
-if [[ ! -d "$CLONE_DIR" ]]; then
-  info "Cloning $REPO_URL into $CLONE_DIR"
-  mkdir -p "$GITHUB_PROJECT_DIR"
-  git clone "$REPO_URL" "$CLONE_DIR"
-else
-  info "Repo already exists at $CLONE_DIR"
-fi
-
-# ───── Copy dotfiles directory ─────
-if [[ -d "$TARGET_DIR" ]]; then
-  echo "⚠️  $TARGET_DIR already exists. Overwrite? [y/N]" > /dev/tty
-  read -r confirm < /dev/tty
-  if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
-    error "Aborted by user."
-  fi
-  rm -rf "$TARGET_DIR"
-  cp -r "$CLONE_DIR/dotfiles" "$TARGET_DIR"
-  info "Copied and overwritten dotfiles. Skipping further install."
-  exit 0
-else
-  cp -r "$CLONE_DIR/dotfiles" "$TARGET_DIR"
-  info "Copied dotfiles (fresh install). Proceeding with setup..."
-fi
-
-# ───── Run installation scripts ─────
+# Run installation scripts
 run_script_if_exists() {
   local script="$1"
-  local script_path="$INSTALL_SCRIPT_DIR/$script"
+  local script_path="$dir_install_scripts/$script"
 
   if [[ -f "$script_path" ]]; then
     info "Running $script..."
     (
-      cd "$INSTALL_SCRIPT_DIR"
+      cd "$dir_install_scripts"
       bash "./$script"
     )
   else
@@ -64,8 +44,44 @@ run_script_if_exists() {
   fi
 }
 
+
+# Check if git  exists
+if ! command -v git &>/dev/null; then
+  warning "git is not installed !!"
+  info "Installing git...."
+  sudo pacman -Sy --noconfirm git < /dev/tty
+fi
+
+# Clone repo if needed
+if [[ ! -d "$dir_project_workstation" ]]; then
+  info "Cloning $repo_url_workstation into $dir_project_workstation"
+  mkdir -p "$dir_github_projects"
+  git clone "$repo_url_workstation" "$dir_project_workstation"
+else
+  info "Repo already exists at $dir_project_workstation"
+fi
+
+# Copy dotfiles to the targetted directory 
+if [[ -d "$dir_dotfiles" ]]; then
+  warning "$dir_dotfiles already exists. Overwrite? [y/N]" > /dev/tty
+  read -r confirm < /dev/tty
+  if [[ ! "$confirm" =~ ^[Yy]$ ]]; then
+    error "Aborted by user."
+  fi
+  rm -rf "$dir_dotfiles"
+  cp -r "$dir_project_workstation/hypr_dotfiles" "$dir_dotfiles"
+  info "Copied and overwritten hyprstation dotfiles. Skipping further install."
+  info "Creating symbolic links of configs"
+  run_script_if_exists "symlink_configs.sh"
+  run_script_if_exists "symlink_files.sh"
+  exit 0
+else
+  cp -r "$dir_project_workstation/hypr_dotfiles" "$dir_dotfiles"
+  info "Copied hyprstation dotfiles (fresh install). Proceeding with setup..."
+fi
+
 run_script_if_exists "package_install.sh"
 run_script_if_exists "symlink_configs.sh"
 run_script_if_exists "symlink_files.sh"
 
-info "✅ All done."
+success "✅ All done."

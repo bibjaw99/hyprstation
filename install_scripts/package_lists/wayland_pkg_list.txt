@@ -1,0 +1,13 @@
+foot
+wayland
+xorg-xwayland
+waybar
+nwg-look
+wlsunset
+wl-clipboard
+swaybg
+swaylock
+xdg-desktop-portal-hyprland
+hyprland
+mako
+grim
