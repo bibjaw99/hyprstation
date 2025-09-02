@@ -1,4 +1,5 @@
 starship.toml
+shell_aliases
 .zshrc
 .bashrc
 .tmux.conf
